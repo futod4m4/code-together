@@ -51,7 +51,7 @@ func (s *Server) Run() error {
 			s.echo.Server.WriteTimeout = time.Second * s.cfg.Server.WriteTimeout
 			s.echo.Server.MaxHeaderBytes = maxHeaderBytes
 			if err := s.echo.StartTLS(s.cfg.Server.Port, certFile, keyFile); err != nil {
-				s.logger.Fatalf("Error starting TLS Server: ", err)
+				s.logger.Fatalf("Error starting TLS Server: %v", err)
 			}
 		}()
 
@@ -77,7 +77,7 @@ func (s *Server) Run() error {
 	go func() {
 		s.logger.Infof("Server is listening on PORT: %s", s.cfg.Server.Port)
 		if err := s.echo.StartServer(server); err != nil {
-			s.logger.Fatalf("Error starting Server: ", err)
+			s.logger.Fatalf("Error starting Server: %v", err)
 		}
 	}()
 
