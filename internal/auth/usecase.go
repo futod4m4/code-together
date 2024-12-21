@@ -11,5 +11,5 @@ type UseCase interface {
 	Login(ctx context.Context, user *models.User) (*models.UserWithToken, error)
 	Update(ctx context.Context, user *models.User) (*models.User, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
-	GetByID(ctx context.Context, user *models.User) (*models.User, error)
+	GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error)
 }

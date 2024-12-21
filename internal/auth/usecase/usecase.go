@@ -19,15 +19,15 @@ const (
 	cacheDuration = 3600
 )
 
-type AuthUC struct {
+type authUC struct {
 	cfg       *config.Config
 	authRepo  auth.Repository
 	redisRepo auth.RedisRepository
 	logger    logger.Logger
 }
 
-func NewAuthUseCase(cfg *config.Config, authRepo auth.Repository, redisRepo auth.RedisRepository, logger logger.Logger) *AuthUC {
-	return &AuthUC{
+func NewAuthUseCase(cfg *config.Config, authRepo auth.Repository, redisRepo auth.RedisRepository, logger logger.Logger) auth.UseCase {
+	return &authUC{
 		cfg:       cfg,
 		authRepo:  authRepo,
 		redisRepo: redisRepo,
@@ -35,8 +35,8 @@ func NewAuthUseCase(cfg *config.Config, authRepo auth.Repository, redisRepo auth
 	}
 }
 
-func (u *AuthUC) Register(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
-	existsUser, err := u.authRepo.FindByEmail(ctx, user)
+func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+	existsUser, err := u.authRepo.FindUserByEmail(ctx, user)
 	if existsUser != nil || err == nil {
 		return nil, httpErrors.NewRestError(http.StatusBadRequest, httpErrors.ErrEmailAlreadyExists, nil)
 	}
@@ -63,8 +63,8 @@ func (u *AuthUC) Register(ctx context.Context, user *models.User) (*models.UserW
 	}, nil
 }
 
-func (u *AuthUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
-	foundUser, err := u.authRepo.FindByEmail(ctx, user)
+func (u *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+	foundUser, err := u.authRepo.FindUserByEmail(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (u *AuthUC) Login(ctx context.Context, user *models.User) (*models.UserWith
 	}, nil
 }
 
-func (u *AuthUC) Update(ctx context.Context, user *models.User) (*models.User, error) {
+func (u *authUC) Update(ctx context.Context, user *models.User) (*models.User, error) {
 	if err := user.PrepareUpdate(); err != nil {
 		return nil, httpErrors.NewBadRequestError(errors.Wrap(err, "authUC.Register.PrepareUpdate"))
 	}
@@ -97,7 +97,7 @@ func (u *AuthUC) Update(ctx context.Context, user *models.User) (*models.User, e
 	}
 
 	if err := u.redisRepo.DeleteUserCtx(ctx, u.GenerateUserKey(user.UserID.String())); err != nil {
-		u.logger.Errorf("AuthUC.Update.DeleteUserCtx: %s", err)
+		u.logger.Errorf("authUC.Update.DeleteUserCtx: %s", err)
 	}
 
 	updatedUser.SanitizePassword()
@@ -105,19 +105,19 @@ func (u *AuthUC) Update(ctx context.Context, user *models.User) (*models.User, e
 	return updatedUser, nil
 }
 
-func (u *AuthUC) Delete(ctx context.Context, userID uuid.UUID) error {
+func (u *authUC) Delete(ctx context.Context, userID uuid.UUID) error {
 	if err := u.authRepo.Delete(ctx, userID); err != nil {
 		return err
 	}
 
 	if err := u.redisRepo.DeleteUserCtx(ctx, u.GenerateUserKey(userID.String())); err != nil {
-		u.logger.Errorf("AuthUC.Delete.DeleteUserCtx: %s", err)
+		u.logger.Errorf("authUC.Delete.DeleteUserCtx: %s", err)
 	}
 
 	return nil
 }
 
-func (u *AuthUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+func (u *authUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
 
 	cachedUser, err := u.redisRepo.GetByIDCtx(ctx, u.GenerateUserKey(userID.String()))
 	if err != nil {
@@ -141,6 +141,6 @@ func (u *AuthUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, e
 	return user, nil
 }
 
-func (u *AuthUC) GenerateUserKey(userID string) string {
+func (u *authUC) GenerateUserKey(userID string) string {
 	return fmt.Sprintf("%s: %s", basePrefix, userID)
 }

@@ -8,8 +8,12 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig
-	Logger LoggerConfig
+	Server   ServerConfig
+	Logger   LoggerConfig
+	Postgres PostgresConfig
+	Redis    RedisConfig
+	Cookie   Cookie
+	Session  Session
 }
 
 type ServerConfig struct {
@@ -32,6 +36,41 @@ type LoggerConfig struct {
 	DisableStacktrace bool
 	Encoding          string
 	Level             string
+}
+
+type PostgresConfig struct {
+	PostgresqlHost     string
+	PostgresqlPort     string
+	PostgresqlUser     string
+	PostgresqlPassword string
+	PostgresqlDbname   string
+	PostgresqlSSLMode  bool
+	PgDriver           string
+}
+
+type RedisConfig struct {
+	RedisAddr      string
+	RedisPassword  string
+	RedisDB        string
+	RedisDefaultdb string
+	MinIdleConns   int
+	PoolSize       int
+	PoolTimeout    int
+	Password       string
+	DB             int
+}
+
+type Cookie struct {
+	Name     string
+	MaxAge   int
+	Secure   bool
+	HTTPOnly bool
+}
+
+type Session struct {
+	Prefix string
+	Name   string
+	Expire int
 }
 
 func LoadConfig(filename string) (*viper.Viper, error) {

@@ -10,16 +10,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-type AuthRepo struct {
+type authRepo struct {
 	db *sqlx.DB
 }
 
 func NewAuthRepository(db *sqlx.DB) auth.Repository {
-	return &AuthRepo{db: db}
+	return &authRepo{db: db}
 }
 
 // Register Create new user
-func (r AuthRepo) Register(ctx context.Context, user *models.User) (*models.User, error) {
+func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.User, error) {
 	u := &models.User{}
 	if err := r.db.QueryRowxContext(ctx, createUserQuery, &user.Email, &user.Password,
 		&user.Nickname, &user.FirstName, &user.LastName,
@@ -31,7 +31,7 @@ func (r AuthRepo) Register(ctx context.Context, user *models.User) (*models.User
 }
 
 // Update Updating existing user
-func (r AuthRepo) Update(ctx context.Context, user *models.User) (*models.User, error) {
+func (r *authRepo) Update(ctx context.Context, user *models.User) (*models.User, error) {
 	u := &models.User{}
 	if err := r.db.QueryRowxContext(ctx, updateUserQuery, &user.FirstName, &user.LastName, &user.Nickname, &user.Email, &user.UserID).StructScan(u); err != nil {
 		return nil, errors.Wrap(err, "authRepo.Update.StructScan")
@@ -41,7 +41,7 @@ func (r AuthRepo) Update(ctx context.Context, user *models.User) (*models.User, 
 }
 
 // Delete Deleting existing user
-func (r AuthRepo) Delete(ctx context.Context, userID uuid.UUID) error {
+func (r *authRepo) Delete(ctx context.Context, userID uuid.UUID) error {
 	result, err := r.db.ExecContext(ctx, deleteUserQuery, userID)
 	if err != nil {
 		return errors.WithMessage(err, "authRepo Delete ExecContext")
@@ -59,7 +59,7 @@ func (r AuthRepo) Delete(ctx context.Context, userID uuid.UUID) error {
 	return nil
 }
 
-func (r AuthRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+func (r *authRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
 	u := &models.User{}
 	if err := r.db.QueryRowxContext(ctx, getByIDQuery, userID).StructScan(u); err != nil {
 		return nil, errors.Wrap(err, "authRepo.GetByID.StructScan")
@@ -68,7 +68,7 @@ func (r AuthRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, 
 	return u, nil
 }
 
-func (r AuthRepo) FindUserByEmail(ctx context.Context, user *models.User) (*models.User, error) {
+func (r *authRepo) FindUserByEmail(ctx context.Context, user *models.User) (*models.User, error) {
 	foundUser := &models.User{}
 	if err := r.db.QueryRowxContext(ctx, findUserByEmailQuery, user.Email).StructScan(foundUser); err != nil {
 		return nil, errors.Wrap(err, "authRepo.FindUserByEmail.StructScan")

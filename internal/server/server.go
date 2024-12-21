@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/futod4m4/m/config"
 	"github.com/futod4m4/m/pkg/logger"
+	"github.com/go-redis/redis/v8"
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo"
 	"net/http"
 	"os"
@@ -21,10 +23,11 @@ const (
 
 // Server struct
 type Server struct {
-	echo *echo.Echo
-	cfg  *config.Config
-
-	logger logger.Logger
+	echo        *echo.Echo
+	cfg         *config.Config
+	logger      logger.Logger
+	redisClient *redis.Client
+	db          *sqlx.DB
 }
 
 func NewServer(cfg *config.Config, logger logger.Logger) *Server {
@@ -37,10 +40,9 @@ func NewServer(cfg *config.Config, logger logger.Logger) *Server {
 
 func (s *Server) Run() error {
 	if s.cfg.Server.SSL {
-		// TODO: MapHandlers
-		//if err := s.MapHandlers(s.echo); err != nil {
-		//	return err
-		//}
+		if err := s.MapHandlers(s.echo); err != nil {
+			return err
+		}
 
 		s.echo.Server.ReadTimeout = time.Second * s.cfg.Server.ReadTimeout
 		s.echo.Server.WriteTimeout = time.Second * s.cfg.Server.WriteTimeout
@@ -81,9 +83,9 @@ func (s *Server) Run() error {
 		}
 	}()
 
-	//if err := s.MapHandlers(s.echo); err != nil {
-	//	return err
-	//}
+	if err := s.MapHandlers(s.echo); err != nil {
+		return err
+	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
