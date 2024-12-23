@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"github.com/futod4m4/m/config"
 	"github.com/futod4m4/m/internal/auth"
 	"github.com/futod4m4/m/internal/models"
@@ -12,6 +13,7 @@ import (
 	"github.com/futod4m4/m/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
+	"github.com/opentracing/opentracing-go"
 	"net/http"
 )
 
@@ -33,7 +35,8 @@ func NewAuthHandlers(cfg *config.Config, authUC auth.UseCase, sessUC session.UCS
 
 func (h *authHandlers) Register() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.Register")
+		defer span.Finish()
 
 		user := &models.User{}
 		if err := utils.ReadRequest(c, user); err != nil {
@@ -46,6 +49,7 @@ func (h *authHandlers) Register() echo.HandlerFunc {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
+		fmt.Println(createdUser)
 
 		sess, err := h.sessUC.CreateSession(ctx, &models.Session{
 			UserID: createdUser.User.UserID,
@@ -54,9 +58,9 @@ func (h *authHandlers) Register() echo.HandlerFunc {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
-
+		fmt.Println(sess)
 		c.SetCookie(utils.CreateSessionCookie(h.cfg, sess))
-
+		fmt.Println("authHandler.Register доходит")
 		return c.JSON(http.StatusCreated, createdUser)
 	}
 }
@@ -67,7 +71,8 @@ func (h *authHandlers) Login() echo.HandlerFunc {
 		Password string `json:"password,omitempty" db:"password" validate:"required,gte=6"`
 	}
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.Login")
+		defer span.Finish()
 
 		login := &Login{}
 		if err := utils.ReadRequest(c, login); err != nil {
@@ -100,7 +105,8 @@ func (h *authHandlers) Login() echo.HandlerFunc {
 
 func (h *authHandlers) Logout() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.Logout")
+		defer span.Finish()
 
 		cookie, err := c.Cookie("session-id")
 		if err != nil {
@@ -125,7 +131,8 @@ func (h *authHandlers) Logout() echo.HandlerFunc {
 
 func (h *authHandlers) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.Update")
+		defer span.Finish()
 
 		uID, err := uuid.Parse(c.Param("user_id"))
 		if err != nil {
@@ -153,7 +160,8 @@ func (h *authHandlers) Update() echo.HandlerFunc {
 
 func (h *authHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.Delete")
+		defer span.Finish()
 
 		uID, err := uuid.Parse(c.Param("user_id"))
 		if err != nil {
@@ -172,7 +180,8 @@ func (h *authHandlers) Delete() echo.HandlerFunc {
 
 func (h *authHandlers) GetUserByID() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ctx := utils.GetRequestCtx(c)
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.GetUserByID")
+		defer span.Finish()
 
 		uID, err := uuid.Parse(c.Param("user_id"))
 		if err != nil {
@@ -192,6 +201,9 @@ func (h *authHandlers) GetUserByID() echo.HandlerFunc {
 
 func (h *authHandlers) GetMe() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		span, _ := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.GetMe")
+		defer span.Finish()
+
 		user, ok := c.Get("user").(*models.User)
 		if !ok {
 			utils.LogResponseError(c, h.logger, httpErrors.NewUnauthorizedError(httpErrors.Unauthorized))
@@ -204,6 +216,9 @@ func (h *authHandlers) GetMe() echo.HandlerFunc {
 
 func (h *authHandlers) GetCSRFToken() echo.HandlerFunc {
 	return func(c echo.Context) error {
+		span, _ := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.Register")
+		defer span.Finish()
+
 		sid, ok := c.Get("sid").(string)
 		if !ok {
 			utils.LogResponseError(c, h.logger, httpErrors.NewUnauthorizedError(httpErrors.Unauthorized))

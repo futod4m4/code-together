@@ -30,11 +30,13 @@ type Server struct {
 	db          *sqlx.DB
 }
 
-func NewServer(cfg *config.Config, logger logger.Logger) *Server {
+func NewServer(cfg *config.Config, logger logger.Logger, db *sqlx.DB, redisClient *redis.Client) *Server {
 	return &Server{
-		echo:   echo.New(),
-		cfg:    cfg,
-		logger: logger,
+		echo:        echo.New(),
+		cfg:         cfg,
+		logger:      logger,
+		db:          db,
+		redisClient: redisClient,
 	}
 }
 

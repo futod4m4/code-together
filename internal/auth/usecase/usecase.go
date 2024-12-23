@@ -10,6 +10,7 @@ import (
 	"github.com/futod4m4/m/pkg/logger"
 	"github.com/futod4m4/m/pkg/utils"
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"net/http"
 )
@@ -36,12 +37,15 @@ func NewAuthUseCase(cfg *config.Config, authRepo auth.Repository, redisRepo auth
 }
 
 func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Register")
+	defer span.Finish()
+
 	existsUser, err := u.authRepo.FindUserByEmail(ctx, user)
 	if existsUser != nil || err == nil {
-		return nil, httpErrors.NewRestError(http.StatusBadRequest, httpErrors.ErrEmailAlreadyExists, nil)
+		return nil, httpErrors.NewRestErrorWithMessage(http.StatusBadRequest, httpErrors.ErrEmailAlreadyExists, nil)
 	}
 
-	if err := user.PrepareCreate(); err != nil {
+	if err = user.PrepareCreate(); err != nil {
 		return nil, httpErrors.NewBadRequestError(errors.Wrap(err, "authUC.Register.PrepareCreate"))
 	}
 
@@ -49,7 +53,6 @@ func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserW
 	if err != nil {
 		return nil, err
 	}
-
 	createdUser.SanitizePassword()
 
 	token, err := utils.GenerateJWTToken(createdUser, u.cfg)
@@ -64,6 +67,9 @@ func (u *authUC) Register(ctx context.Context, user *models.User) (*models.UserW
 }
 
 func (u *authUC) Login(ctx context.Context, user *models.User) (*models.UserWithToken, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Login")
+	defer span.Finish()
+
 	foundUser, err := u.authRepo.FindUserByEmail(ctx, user)
 	if err != nil {
 		return nil, err
@@ -87,6 +93,9 @@ func (u *authUC) Login(ctx context.Context, user *models.User) (*models.UserWith
 }
 
 func (u *authUC) Update(ctx context.Context, user *models.User) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Update")
+	defer span.Finish()
+
 	if err := user.PrepareUpdate(); err != nil {
 		return nil, httpErrors.NewBadRequestError(errors.Wrap(err, "authUC.Register.PrepareUpdate"))
 	}
@@ -106,6 +115,9 @@ func (u *authUC) Update(ctx context.Context, user *models.User) (*models.User, e
 }
 
 func (u *authUC) Delete(ctx context.Context, userID uuid.UUID) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.Delete")
+	defer span.Finish()
+
 	if err := u.authRepo.Delete(ctx, userID); err != nil {
 		return err
 	}
@@ -118,6 +130,8 @@ func (u *authUC) Delete(ctx context.Context, userID uuid.UUID) error {
 }
 
 func (u *authUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.GetByID")
+	defer span.Finish()
 
 	cachedUser, err := u.redisRepo.GetByIDCtx(ctx, u.GenerateUserKey(userID.String()))
 	if err != nil {

@@ -1,23 +1,30 @@
 package server
 
 import (
-	"github.com/futod4m4/m/internal/session/usecase"
-	"github.com/futod4m4/m/pkg/csrf"
-	"github.com/futod4m4/m/pkg/utils"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"net/http"
-	"strings"
-
+	"fmt"
 	authHttp "github.com/futod4m4/m/internal/auth/delivery/http"
 	authRepository "github.com/futod4m4/m/internal/auth/repository"
 	authUseCase "github.com/futod4m4/m/internal/auth/usecase"
 	apiMiddlewares "github.com/futod4m4/m/internal/middleware"
 	sessionRepository "github.com/futod4m4/m/internal/session/repository"
+	"github.com/futod4m4/m/internal/session/usecase"
+	"github.com/futod4m4/m/pkg/csrf"
+	"github.com/futod4m4/m/pkg/metric"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 // Map Server Handlers
 func (s *Server) MapHandlers(e *echo.Echo) error {
+	metrics, err := metric.CreateMetrics(s.cfg.Metrics.URL, s.cfg.Metrics.ServiceName)
+	if err != nil {
+		s.logger.Errorf("CreateMetrics Error: %s", err)
+	}
+	s.logger.Info(
+		"Metrics available URL: %s, ServiceName: %s",
+		s.cfg.Metrics.URL,
+		s.cfg.Metrics.ServiceName,
+	)
 
 	// Init repositories
 	aRepo := authRepository.NewAuthRepository(s.db)
@@ -34,6 +41,7 @@ func (s *Server) MapHandlers(e *echo.Echo) error {
 	mw := apiMiddlewares.NewMiddlewareManager(sessUC, authUC, s.cfg, []string{"*"}, s.logger)
 
 	e.Use(mw.RequestLoggerMiddleware)
+	e.Use(mw.MetricsMiddleware(metrics))
 
 	if s.cfg.Server.SSL {
 		e.Pre(middleware.HTTPSRedirect())
@@ -50,26 +58,22 @@ func (s *Server) MapHandlers(e *echo.Echo) error {
 	}))
 	e.Use(middleware.RequestID())
 
-	e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
-		Level: 5,
-		Skipper: func(c echo.Context) bool {
-			return strings.Contains(c.Request().URL.Path, "swagger")
-		},
-	}))
+	//e.Use(middleware.GzipWithConfig(middleware.GzipConfig{
+	//	Level: 5,
+	//	Skipper: func(c echo.Context) bool {
+	//		return strings.Contains(c.Request().URL.Path, "swagger")
+	//	},
+	//}))
 	e.Use(middleware.Secure())
 	e.Use(middleware.BodyLimit("2M"))
 
 	v1 := e.Group("/api/v1")
 
-	health := v1.Group("/health")
 	authGroup := v1.Group("/auth")
 
 	authHttp.MapAuthRoutes(authGroup, authHandlers, mw)
 
-	health.GET("", func(c echo.Context) error {
-		s.logger.Infof("Health check RequestID: %s", utils.GetRequestID(c))
-		return c.JSON(http.StatusOK, map[string]string{"status": "OK"})
-	})
+	fmt.Println("handlersMapped")
 
 	return nil
 }

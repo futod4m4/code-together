@@ -19,8 +19,14 @@ func (mw *MiddlewareManager) RequestLoggerMiddleware(next echo.HandlerFunc) echo
 		s := time.Since(start).String()
 		requestID := utils.GetRequestID(ctx)
 
-		mw.logger.Infof("RequestID: %s, Method: %s, URI: %s, Status: %v, Size: %v, Time: %s",
-			requestID, req.Method, req.URL, status, size, s,
+		// Проверяем, не является ли ошибка nil, если да, то выводим "nil"
+		errorMsg := "nil"
+		if err != nil {
+			errorMsg = err.Error() // Преобразуем ошибку в строку
+		}
+
+		mw.logger.Infof("RequestID: %s, Method: %s, URI: %s, Status: %v, Size: %v, Time: %s, Error: %s",
+			requestID, req.Method, req.URL, status, size, s, errorMsg,
 		)
 		return err
 	}

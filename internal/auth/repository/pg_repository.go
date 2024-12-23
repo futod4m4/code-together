@@ -7,6 +7,7 @@ import (
 	"github.com/futod4m4/m/internal/models"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 )
 
@@ -20,9 +21,12 @@ func NewAuthRepository(db *sqlx.DB) auth.Repository {
 
 // Register Create new user
 func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.Register")
+	defer span.Finish()
+
 	u := &models.User{}
-	if err := r.db.QueryRowxContext(ctx, createUserQuery, &user.Email, &user.Password,
-		&user.Nickname, &user.FirstName, &user.LastName,
+	if err := r.db.QueryRowxContext(ctx, createUserQuery, &user.Email,
+		&user.Password, &user.Nickname, &user.FirstName, &user.LastName,
 	).StructScan(u); err != nil {
 		return nil, errors.Wrap(err, "authRepo.Register.StructScan")
 	}
@@ -32,6 +36,9 @@ func (r *authRepo) Register(ctx context.Context, user *models.User) (*models.Use
 
 // Update Updating existing user
 func (r *authRepo) Update(ctx context.Context, user *models.User) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.Update")
+	defer span.Finish()
+
 	u := &models.User{}
 	if err := r.db.QueryRowxContext(ctx, updateUserQuery, &user.FirstName, &user.LastName, &user.Nickname, &user.Email, &user.UserID).StructScan(u); err != nil {
 		return nil, errors.Wrap(err, "authRepo.Update.StructScan")
@@ -42,6 +49,9 @@ func (r *authRepo) Update(ctx context.Context, user *models.User) (*models.User,
 
 // Delete Deleting existing user
 func (r *authRepo) Delete(ctx context.Context, userID uuid.UUID) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.Delete")
+	defer span.Finish()
+
 	result, err := r.db.ExecContext(ctx, deleteUserQuery, userID)
 	if err != nil {
 		return errors.WithMessage(err, "authRepo Delete ExecContext")
@@ -60,6 +70,9 @@ func (r *authRepo) Delete(ctx context.Context, userID uuid.UUID) error {
 }
 
 func (r *authRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.GetByID")
+	defer span.Finish()
+
 	u := &models.User{}
 	if err := r.db.QueryRowxContext(ctx, getByIDQuery, userID).StructScan(u); err != nil {
 		return nil, errors.Wrap(err, "authRepo.GetByID.StructScan")
@@ -69,10 +82,12 @@ func (r *authRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User,
 }
 
 func (r *authRepo) FindUserByEmail(ctx context.Context, user *models.User) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.FindUserByEmail")
+	defer span.Finish()
+
 	foundUser := &models.User{}
 	if err := r.db.QueryRowxContext(ctx, findUserByEmailQuery, user.Email).StructScan(foundUser); err != nil {
-		return nil, errors.Wrap(err, "authRepo.FindUserByEmail.StructScan")
+		return nil, errors.Wrap(err, "authRepo.FindByEmail.QueryRowxContext")
 	}
-
 	return foundUser, nil
 }
