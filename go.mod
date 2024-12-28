@@ -7,6 +7,7 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/jackc/pgx/v5 v5.7.1
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/labstack/echo v3.3.10+incompatible
@@ -17,6 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/viper v1.19.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
+	github.com/uber/jaeger-lib v2.4.1+incompatible
 	go.uber.org/zap v1.21.0
 	golang.org/x/crypto v0.27.0
 )
@@ -53,7 +55,6 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/atomic v1.9.0 // indirect

@@ -2,11 +2,14 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/futod4m4/m/config"
+	"github.com/futod4m4/m/internal/websocket"
 	"github.com/futod4m4/m/pkg/logger"
 	"github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -59,6 +62,14 @@ func (s *Server) Run() error {
 			}
 		}()
 
+		go func() {
+			fmt.Println(s.cfg.WebSocketConfig.SocketPort)
+			s.logger.Infof("WebSocket server is listening in PORT: %s", ":8081")
+			upgrader := websocket.NewUpgrader(s.cfg)
+			http.HandleFunc("/ws", websocket.HandleWebSocket(upgrader))
+			log.Fatal(http.ListenAndServe(":8081", nil))
+		}()
+
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
@@ -83,6 +94,14 @@ func (s *Server) Run() error {
 		if err := s.echo.StartServer(server); err != nil {
 			s.logger.Fatalf("Error starting Server: %v", err)
 		}
+	}()
+
+	go func() {
+		fmt.Println(s.cfg.WebSocketConfig.SocketPort)
+		s.logger.Infof("WebSocket server is listening in PORT: %s", ":8081")
+		upgrader := websocket.NewUpgrader(s.cfg)
+		http.HandleFunc("/ws", websocket.HandleWebSocket(upgrader))
+		log.Fatal(http.ListenAndServe(":8081", nil))
 	}()
 
 	if err := s.MapHandlers(s.echo); err != nil {

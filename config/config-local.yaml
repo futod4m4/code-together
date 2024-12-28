@@ -11,6 +11,12 @@ server:
   CSRF: true
   Debug: false
 
+socket:
+  SocketPort: :8081
+  ReadBufferSize: 2048
+  WriteBufferSize: 2048
+  CheckOrigin: true
+
 logger:
   Development: true
   DisableCaller: false
@@ -57,3 +63,4 @@ jaeger:
 metrics:
   Url: 0.0.0.0:7070
   ServiceName: api
+

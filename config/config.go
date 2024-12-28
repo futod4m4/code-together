@@ -8,14 +8,15 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Logger   LoggerConfig
-	Postgres PostgresConfig
-	Redis    RedisConfig
-	Cookie   Cookie
-	Session  Session
-	Jaeger   Jaeger
-	Metrics  Metrics
+	Server          ServerConfig
+	Logger          LoggerConfig
+	Postgres        PostgresConfig
+	Redis           RedisConfig
+	Cookie          Cookie
+	Session         Session
+	Jaeger          Jaeger
+	Metrics         Metrics
+	WebSocketConfig SocketConfig
 }
 
 type ServerConfig struct {
@@ -30,6 +31,13 @@ type ServerConfig struct {
 	CtxDefaultTimeout time.Duration
 	CSRF              bool
 	Debug             bool
+}
+
+type SocketConfig struct {
+	SocketPort      string
+	ReadBufferSize  int
+	WriteBufferSize int
+	CheckOrigin     bool
 }
 
 type LoggerConfig struct {
