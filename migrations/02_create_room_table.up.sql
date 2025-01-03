@@ -5,6 +5,7 @@ CREATE TABLE rooms (
     room_id SERIAL PRIMARY KEY,
     room_name VARCHAR(50) NOT NULL,
     join_code VARCHAR(12) UNIQUE NOT NULL,
+    language VARCHAR(50) NOT NULL,
     owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -19,18 +20,5 @@ CREATE TABLE room_code (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-    RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER set_updated_at
-    BEFORE UPDATE ON rooms
-    FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
 
 

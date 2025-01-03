@@ -47,6 +47,15 @@ func (u *roomUC) CreateRoom(ctx context.Context, room *models.Room) (*models.Roo
 
 	room.OwnerID = user.UserID
 
+	err = room.GenJoinCode()
+	if err != nil {
+		return nil, err
+	}
+
+	if room.Name == "" {
+		room.Name = user.Nickname + "'s Room"
+	}
+
 	if err = utils.ValidateStruct(ctx, room); err != nil {
 		return nil, httpErrors.NewBadRequestError(errors.WithMessage(err, "roomsUC.CreateRoom.ValidateStruct"))
 	}
@@ -127,6 +136,30 @@ func (u *roomUC) GetRoomByID(ctx context.Context, roomID uuid.UUID) (*models.Roo
 
 	if err = u.redisRepo.SetRoomCtx(ctx, u.getKeyWithPrefix(roomID.String()), cacheDuration, r); err != nil {
 		u.logger.Errorf("roomUC.GetRoomByID.SetRoomCtx: %s", err)
+	}
+
+	return r, err
+}
+
+func (u *roomUC) GetRoomByJoinCode(ctx context.Context, joinCode string) (*models.Room, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "roomUC.GetRoomByJoinCode")
+	defer span.Finish()
+
+	roomBase, err := u.redisRepo.GetRoomByIDCtx(ctx, u.getKeyWithPrefix(joinCode))
+	if err != nil {
+		u.logger.Errorf("roomUC.GetRoomByID.GetRoomByJoinCodeCtx: %v", err)
+	}
+	if roomBase != nil {
+		return roomBase, nil
+	}
+
+	r, err := u.roomRepo.GetRoomByJoinCode(ctx, joinCode)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = u.redisRepo.SetRoomCtx(ctx, u.getKeyWithPrefix(joinCode), cacheDuration, r); err != nil {
+		u.logger.Errorf("roomUC.GetRoomByJoinCode.SetRoomCtx: %s", err)
 	}
 
 	return r, err

@@ -9,15 +9,14 @@ import (
 )
 
 type Room struct {
-	ID          uuid.UUID `json:"room_id" db:"room_id" redis:"room_id" validate:"omitempty"`
-	Name        string    `json:"room_name" db:"room_name" redis:"room_name" validate:"omitempty"`
-	JoinCode    string    `json:"join_code" db:"join_code" redis:"join_code" validate:"omitempty"`
-	OwnerID     uuid.UUID `json:"owner_id" db:"owner_id" redis:"owner_id" validate:"omitempty"`
-	Language    string    `json:"language" db:"language" redis:"language" validate:"omitempty"`
-	AccessLevel string    `json:"access_level" db:"access_level" redis:"access_level" validate:"omitempty"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at" redis:"created_at" validate:"omitempty"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at" redis:"updated_at" validate:"omitempty"`
-	Code        *RoomCode
+	ID        uuid.UUID `json:"room_id" db:"room_id" redis:"room_id" validate:"omitempty"`
+	Name      string    `json:"room_name" db:"room_name" redis:"room_name" validate:"omitempty"`
+	JoinCode  string    `json:"join_code" db:"join_code" redis:"join_code" validate:"omitempty"`
+	OwnerID   uuid.UUID `json:"owner_id" db:"owner_id" redis:"owner_id" validate:"omitempty"`
+	Language  string    `json:"language" db:"language" redis:"language" validate:"omitempty"`
+	CreatedAt time.Time `json:"created_at" db:"created_at" redis:"created_at" validate:"omitempty"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at" redis:"updated_at" validate:"omitempty"`
+	Code      *RoomCode
 }
 
 type RoomCode struct {
@@ -28,7 +27,7 @@ type RoomCode struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at" redis:"updated_at" validate:"omitempty"`
 }
 
-func (r *Room) genJoinCode() error {
+func (r *Room) GenJoinCode() error {
 	bytes := make([]byte, 12)
 	_, err := rand.Read(bytes)
 	if err != nil {
