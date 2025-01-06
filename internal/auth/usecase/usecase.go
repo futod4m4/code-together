@@ -17,7 +17,7 @@ import (
 
 const (
 	basePrefix    = "api-auth:"
-	cacheDuration = 3600
+	cacheDuration = 7200
 )
 
 type authUC struct {
@@ -105,7 +105,7 @@ func (u *authUC) Update(ctx context.Context, user *models.User) (*models.User, e
 		return nil, err
 	}
 
-	if err := u.redisRepo.DeleteUserCtx(ctx, u.GenerateUserKey(user.UserID.String())); err != nil {
+	if err = u.redisRepo.DeleteUserCtx(ctx, u.GenerateUserKey(user.UserID.String())); err != nil {
 		u.logger.Errorf("authUC.Update.DeleteUserCtx: %s", err)
 	}
 
@@ -146,7 +146,7 @@ func (u *authUC) GetByID(ctx context.Context, userID uuid.UUID) (*models.User, e
 		return nil, err
 	}
 
-	if err := u.redisRepo.SetUserCtx(ctx, u.GenerateUserKey(user.UserID.String()), cacheDuration, user); err != nil {
+	if err = u.redisRepo.SetUserCtx(ctx, u.GenerateUserKey(user.UserID.String()), cacheDuration, user); err != nil {
 		u.logger.Errorf("authUC.GetByID.SetUserCtx: %v", err)
 	}
 

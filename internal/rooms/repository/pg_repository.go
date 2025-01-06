@@ -93,7 +93,7 @@ func (r *roomRepo) GetRoomByJoinCode(ctx context.Context, joinCode string) (*mod
 	defer span.Finish()
 
 	ro := &models.Room{}
-	if err := r.db.GetContext(ctx, ro, getRoomByID, joinCode); err != nil {
+	if err := r.db.GetContext(ctx, ro, getRoomByJoinCode, joinCode); err != nil {
 		return nil, errors.Wrap(err, "roomRepo.GetRoomByID.GetContext")
 	}
 

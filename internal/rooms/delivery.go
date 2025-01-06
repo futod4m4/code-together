@@ -7,7 +7,6 @@ type Handlers interface {
 	Update() echo.HandlerFunc
 	Delete() echo.HandlerFunc
 	GetRoomByID() echo.HandlerFunc
-
 	Join() echo.HandlerFunc
 	Leave() echo.HandlerFunc
 }

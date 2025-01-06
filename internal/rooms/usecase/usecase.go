@@ -145,24 +145,12 @@ func (u *roomUC) GetRoomByJoinCode(ctx context.Context, joinCode string) (*model
 	span, ctx := opentracing.StartSpanFromContext(ctx, "roomUC.GetRoomByJoinCode")
 	defer span.Finish()
 
-	roomBase, err := u.redisRepo.GetRoomByIDCtx(ctx, u.getKeyWithPrefix(joinCode))
-	if err != nil {
-		u.logger.Errorf("roomUC.GetRoomByID.GetRoomByJoinCodeCtx: %v", err)
-	}
-	if roomBase != nil {
-		return roomBase, nil
-	}
-
 	r, err := u.roomRepo.GetRoomByJoinCode(ctx, joinCode)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = u.redisRepo.SetRoomCtx(ctx, u.getKeyWithPrefix(joinCode), cacheDuration, r); err != nil {
-		u.logger.Errorf("roomUC.GetRoomByJoinCode.SetRoomCtx: %s", err)
-	}
-
-	return r, err
+	return r, nil
 }
 
 func (u *roomUC) GetRoomCode(roomID int) (string, error) {

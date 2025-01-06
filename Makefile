@@ -13,7 +13,7 @@ version:
 	migrate -database postgres://fedor:postgres@localhost:5432/code_together?sslmode=disable -path migrations version
 
 migrate_up:
-	migrate -database postgres://fedor:postgres@localhost:5432/code_together?sslmode=disable -path migrations up 1
+	migrate -database postgres://fedor:postgres@localhost:5432/code_together?sslmode=disable -path migrations up $(version)
 
 migrate_down:
-	migrate -database postgres://fedor:postgres@localhost:5432/code_together?sslmode=disable -path migrations down 1
+	migrate -database postgres://fedor:postgres@localhost:5432/code_together?sslmode=disable -path migrations down $(version)
