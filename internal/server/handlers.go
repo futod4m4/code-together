@@ -18,6 +18,7 @@ import (
 	"github.com/futod4m4/m/pkg/metric"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"net/http"
 )
 
 // Map Server Handlers
@@ -63,8 +64,10 @@ func (s *Server) MapHandlers(e *echo.Echo) error {
 	}
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderXRequestID, csrf.CSRFHeader},
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderXRequestID, csrf.CSRFHeader},
+		AllowCredentials: true,
+		AllowMethods:     []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
 	}))
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		StackSize:         1 << 10, // 1 KB

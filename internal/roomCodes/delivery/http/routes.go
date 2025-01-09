@@ -8,6 +8,7 @@ import (
 
 func MapRoomRoutes(roomCodeGroup *echo.Group, r roomCodes.HttpHandlers, mw *middleware.MiddlewareManager) {
 	roomCodeGroup.POST("/create", r.Create())
+	roomCodeGroup.POST("/compile", r.Compile())
 	roomCodeGroup.PUT("/:room_code_id", r.Update())
 	roomCodeGroup.DELETE("/:room_code_id", r.Delete())
 	roomCodeGroup.GET("/:room_code_id", r.GetRoomCodeByID())

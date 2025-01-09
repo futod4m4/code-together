@@ -163,25 +163,21 @@ func listenForUpdates(client *SafeWebSocket, room *RoomConnections) {
 	}()
 
 	for {
-		// Чтение бинарного сообщения
 		messageType, message, err := client.conn.ReadMessage()
 		if err != nil {
 			log.Printf("Error reading message: %v", err)
 			return
 		}
 
-		// Игнорируем не бинарные сообщения
 		if messageType != websocket.BinaryMessage {
 			log.Println("Ignoring non-binary message")
 			continue
 		}
 
-		// Обновление состояния документа
 		room.mu.Lock()
 		room.docState = applyYUpdate(room.docState, message)
 		room.mu.Unlock()
 
-		// Передача обновления в канал
 		room.broadcast <- message
 	}
 }

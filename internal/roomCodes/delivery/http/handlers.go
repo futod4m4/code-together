@@ -138,3 +138,32 @@ func (h *roomCodeHandlers) GetRoomCodeByRoomID() echo.HandlerFunc {
 		return c.JSON(http.StatusOK, roomCodeIDByRoomID)
 	}
 }
+
+func (h *roomCodeHandlers) Compile() echo.HandlerFunc {
+	type CompileRequest struct {
+		Code     string `json:"code"`
+		Language string `json:"language"`
+	}
+
+	type CompileResponse struct {
+		Output string `json:"output"`
+		Error  string `json:"error,omitempty"`
+	}
+
+	return func(c echo.Context) error {
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomHandlers.Compile")
+		defer span.Finish()
+
+		var req CompileRequest
+		if err := c.Bind(&req); err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
+		}
+
+		output, compileErr := utils.ExecuteCode(ctx, req.Language, req.Code)
+		if compileErr != nil {
+			return c.JSON(http.StatusOK, CompileResponse{Output: "", Error: compileErr.Error()})
+		}
+
+		return c.JSON(http.StatusOK, CompileResponse{Output: output})
+	}
+}
