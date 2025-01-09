@@ -1,9 +1,10 @@
 package http
 
 import (
+	"fmt"
 	"github.com/futod4m4/m/config"
 	"github.com/futod4m4/m/internal/models"
-	"github.com/futod4m4/m/internal/rooms"
+	"github.com/futod4m4/m/internal/roomCodes"
 	"github.com/futod4m4/m/pkg/httpErrors"
 	"github.com/futod4m4/m/pkg/logger"
 	"github.com/futod4m4/m/pkg/utils"
@@ -13,81 +14,85 @@ import (
 	"net/http"
 )
 
-type roomHandlers struct {
-	cfg    *config.Config
-	roomUC rooms.RoomUseCase
-	logger logger.Logger
+type roomCodeHandlers struct {
+	cfg        *config.Config
+	roomCodeUC roomCodes.RoomCodeUseCase
+	logger     logger.Logger
 }
 
-func NewRoomHandlers(cfg *config.Config, roomUC rooms.RoomUseCase, logger logger.Logger) rooms.HttpHandlers {
-	return &roomHandlers{
-		cfg:    cfg,
-		roomUC: roomUC,
-		logger: logger,
+func NewRoomCodeHandlers(cfg *config.Config, roomCodeUC roomCodes.RoomCodeUseCase, logger logger.Logger) roomCodes.HttpHandlers {
+	return &roomCodeHandlers{
+		cfg:        cfg,
+		roomCodeUC: roomCodeUC,
+		logger:     logger,
 	}
 }
 
-func (h *roomHandlers) Create() echo.HandlerFunc {
+func (h *roomCodeHandlers) Create() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomHandlers.Create")
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomCodeHandlers.Create")
 		defer span.Finish()
 
-		r := &models.Room{}
+		r := &models.RoomCode{}
 		if err := c.Bind(r); err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		createdRoom, err := h.roomUC.CreateRoom(ctx, r)
+		createdRoomCode, err := h.roomCodeUC.CreateRoomCode(ctx, r)
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		return c.JSON(http.StatusCreated, createdRoom)
+		return c.JSON(http.StatusCreated, createdRoomCode)
 	}
 }
 
-func (h *roomHandlers) Update() echo.HandlerFunc {
+func (h *roomCodeHandlers) Update() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomHandlers.Create")
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomCodeHandlers.Update")
 		defer span.Finish()
 
-		roomUUID, err := uuid.Parse(c.Param("room_id"))
+		fmt.Println("0")
+		roomCodeUUID, err := uuid.Parse(c.Param("room_code_id"))
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		r := &models.Room{}
+		fmt.Println("1")
+		r := &models.RoomCode{}
 		if err = c.Bind(r); err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
-		r.ID = roomUUID
+		r.ID = roomCodeUUID
 
-		updatedRoom, err := h.roomUC.UpdateRoom(ctx, r)
+		fmt.Println("2")
+
+		updatedRoomCode, err := h.roomCodeUC.UpdateRoomCode(ctx, r)
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		return c.JSON(http.StatusOK, updatedRoom)
+		return c.JSON(http.StatusOK, updatedRoomCode)
 	}
 }
 
-func (h *roomHandlers) Delete() echo.HandlerFunc {
+func (h *roomCodeHandlers) Delete() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomHandlers.Create")
 		defer span.Finish()
 
-		roomUUID, err := uuid.Parse(c.Param("room_id"))
+		roomCodeUUID, err := uuid.Parse(c.Param("room_code_id"))
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		if err = h.roomUC.DeleteRoom(ctx, roomUUID); err != nil {
+		if err = h.roomCodeUC.DeleteRoomCode(ctx, roomCodeUUID); err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
@@ -96,40 +101,40 @@ func (h *roomHandlers) Delete() echo.HandlerFunc {
 	}
 }
 
-func (h *roomHandlers) GetRoomByID() echo.HandlerFunc {
+func (h *roomCodeHandlers) GetRoomCodeByID() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomHandlers.Create")
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomCodeHandlers.GetRoomCodeByID")
 		defer span.Finish()
 
-		roomUUID, err := uuid.Parse(c.Param("room_id"))
+		roomCodeUUID, err := uuid.Parse(c.Param("room_code_id"))
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		roomByID, err := h.roomUC.GetRoomByID(ctx, roomUUID)
+		roomCodeByID, err := h.roomCodeUC.GetRoomCodeByID(ctx, roomCodeUUID)
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		return c.JSON(http.StatusOK, roomByID)
+		return c.JSON(http.StatusOK, roomCodeByID)
 	}
 }
 
-func (h *roomHandlers) GetRoomByJoinCode() echo.HandlerFunc {
+func (h *roomCodeHandlers) GetRoomCodeByRoomID() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomHandlers.Create")
 		defer span.Finish()
 
-		joinCode := c.Param("join_code")
+		roomID, err := uuid.Parse(c.Param("room_id"))
 
-		roomByJoinCode, err := h.roomUC.GetRoomByJoinCode(ctx, joinCode)
+		roomCodeIDByRoomID, err := h.roomCodeUC.GetRoomCodeByRoomID(ctx, roomID)
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		return c.JSON(http.StatusOK, roomByJoinCode)
+		return c.JSON(http.StatusOK, roomCodeIDByRoomID)
 	}
 }

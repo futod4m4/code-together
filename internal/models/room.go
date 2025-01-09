@@ -16,11 +16,10 @@ type Room struct {
 	Language  string    `json:"language" db:"language" redis:"language" validate:"omitempty"`
 	CreatedAt time.Time `json:"created_at" db:"created_at" redis:"created_at" validate:"omitempty"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at" redis:"updated_at" validate:"omitempty"`
-	Code      *RoomCode
 }
 
 type RoomCode struct {
-	ID        int       `json:"room_code_id" db:"room_code_id" redis:"room_code_id" validate:"omitempty"`
+	ID        uuid.UUID `json:"room_code_id" db:"room_code_id" redis:"room_code_id" validate:"omitempty"`
 	RoomID    uuid.UUID `json:"room_id" db:"room_id" redis:"room_id" validate:"omitempty"`
 	Code      string    `json:"code" db:"code" redis:"code" validate:"omitempty"`
 	CreatedAt time.Time `json:"created_at" db:"created_at" redis:"created_at" validate:"omitempty"`

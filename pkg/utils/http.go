@@ -91,6 +91,28 @@ func GetUserFromCtx(ctx context.Context) (*models.User, error) {
 	return user, nil
 }
 
+type RoomCtxKey struct{}
+
+func GetRoomFromCtx(ctx context.Context) (*models.Room, error) {
+	room, ok := ctx.Value(RoomCtxKey{}).(*models.Room)
+	if !ok {
+		return nil, httpErrors.InvalidRoomError
+	}
+
+	return room, nil
+}
+
+type RoomCodeCtxKey struct{}
+
+func GetRoomCodeFromCtx(ctx context.Context) (*models.RoomCode, error) {
+	roomCode, ok := ctx.Value(RoomCodeCtxKey{}).(*models.RoomCode)
+	if !ok {
+		return nil, httpErrors.InvalidRoomError
+	}
+
+	return roomCode, nil
+}
+
 func GetIPAddress(c echo.Context) string {
 	return c.Request().RemoteAddr
 }

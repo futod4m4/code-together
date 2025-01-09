@@ -153,18 +153,6 @@ func (u *roomUC) GetRoomByJoinCode(ctx context.Context, joinCode string) (*model
 	return r, nil
 }
 
-func (u *roomUC) GetRoomCode(roomID int) (string, error) {
-	//TODO implement me
-
-	return "", nil
-}
-
-func (u *roomUC) UpdateRoomCode(roomID int, code string, userID string) error {
-	//TODO implement me
-
-	return nil
-}
-
 func (u *roomUC) getKeyWithPrefix(roomID string) string {
 	return fmt.Sprintf("%s: %s", baseprefix, roomID)
 }

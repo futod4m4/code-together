@@ -1,4 +1,4 @@
-package rooms
+package roomCodes
 
 import "github.com/labstack/echo"
 
@@ -6,11 +6,10 @@ type HttpHandlers interface {
 	Create() echo.HandlerFunc
 	Update() echo.HandlerFunc
 	Delete() echo.HandlerFunc
-	GetRoomByID() echo.HandlerFunc
-	GetRoomByJoinCode() echo.HandlerFunc
+	GetRoomCodeByID() echo.HandlerFunc
+	GetRoomCodeByRoomID() echo.HandlerFunc
 }
 
 type WSHandlers interface {
-	Join() echo.HandlerFunc
-	Leave() echo.HandlerFunc
+	Compile() echo.HandlerFunc
 }

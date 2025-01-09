@@ -11,12 +11,10 @@ import (
 	"time"
 )
 
-// News redis repository
 type roomRedisRepo struct {
 	redisClient *redis.Client
 }
 
-// News redis repository constructor
 func NewRoomRedisRepo(redisClient *redis.Client) rooms.RedisRepository {
 	return &roomRedisRepo{redisClient: redisClient}
 }
@@ -38,7 +36,7 @@ func (n *roomRedisRepo) GetRoomByIDCtx(ctx context.Context, key string) (*models
 	return roomBase, nil
 }
 
-// Cache news item
+// Cache room item
 func (n *roomRedisRepo) SetRoomCtx(ctx context.Context, key string, seconds int, news *models.Room) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "roomRedisRepo.SetRoomCtx")
 	defer span.Finish()

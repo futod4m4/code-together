@@ -12,8 +12,4 @@ type RoomUseCase interface {
 	DeleteRoom(ctx context.Context, roomID uuid.UUID) error
 	GetRoomByID(ctx context.Context, roomID uuid.UUID) (*models.Room, error)
 	GetRoomByJoinCode(ctx context.Context, joinCode string) (*models.Room, error)
-
-	// Code management
-	GetRoomCode(roomID int) (string, error)
-	UpdateRoomCode(roomID int, code string, userID string) error
 }

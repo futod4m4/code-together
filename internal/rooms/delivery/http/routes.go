@@ -6,11 +6,10 @@ import (
 	"github.com/labstack/echo"
 )
 
-func MapRoomRoutes(roomGroup *echo.Group, r rooms.Handlers, mw *middleware.MiddlewareManager) {
+func MapRoomRoutes(roomGroup *echo.Group, r rooms.HttpHandlers, mw *middleware.MiddlewareManager) {
 	roomGroup.POST("/create", r.Create(), mw.AuthSessionMiddleware, mw.CSRF)
-	roomGroup.PATCH("/update", r.Update(), mw.AuthSessionMiddleware, mw.CSRF)
-	roomGroup.DELETE("/delete", r.Delete(), mw.AuthSessionMiddleware, mw.CSRF)
+	roomGroup.PUT("/:room_id", r.Update(), mw.AuthSessionMiddleware, mw.CSRF)
+	roomGroup.DELETE("/:room_id", r.Delete(), mw.AuthSessionMiddleware, mw.CSRF)
 	roomGroup.GET("/:room_id", r.GetRoomByID())
-	roomGroup.GET("/join/:join_code/monaco-react-2", r.Join())
-	roomGroup.GET("/leave", r.Leave(), mw.AuthSessionMiddleware, mw.CSRF)
+	roomGroup.GET("/code/:join_code", r.GetRoomByJoinCode())
 }

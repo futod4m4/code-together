@@ -15,7 +15,7 @@ type roomRepo struct {
 	db *sqlx.DB
 }
 
-func NewAuthRepository(db *sqlx.DB) rooms.Repository {
+func NewRoomRepository(db *sqlx.DB) rooms.Repository {
 	return &roomRepo{db: db}
 }
 
@@ -98,14 +98,4 @@ func (r *roomRepo) GetRoomByJoinCode(ctx context.Context, joinCode string) (*mod
 	}
 
 	return ro, nil
-}
-
-func (r *roomRepo) GetRoomCode(roomID int) (string, error) {
-	//TODO implement me
-	return "", nil
-}
-
-func (r *roomRepo) UpdateRoomCode(roomID int, code string, userID string) error {
-	//TODO implement me
-	return nil
 }

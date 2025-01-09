@@ -10,18 +10,19 @@ CREATE TABLE rooms (
     join_code VARCHAR(12) UNIQUE NOT NULL,
     language VARCHAR(50) NOT NULL,
     owner_id UUID REFERENCES users(user_id),
-    created_at TIMESTAMP DEFAULT now(),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX idx_rooms_join_code ON rooms(join_code);
 
 CREATE TABLE room_code (
-    id UUID PRIMARY KEY default uuid_generate_v4(),
+    room_code_id UUID PRIMARY KEY default uuid_generate_v4(),
     room_id UUID REFERENCES rooms(room_id) ON DELETE CASCADE,
     code TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 
