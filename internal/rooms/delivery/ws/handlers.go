@@ -93,7 +93,6 @@ func (h *roomWSHandlers) Join() echo.HandlerFunc {
 
 		sendCurrentState(safeConn, roomConn)
 
-		// Слушаем сообщения от клиента
 		go listenForUpdates(safeConn, roomConn)
 
 		return nil
@@ -112,11 +111,11 @@ func getOrCreateRoom(roomID string) *RoomConnections {
 	if !exists {
 		room = &RoomConnections{
 			clients:   make(map[*SafeWebSocket]bool),
-			docState:  []byte{}, // Изначально пустое состояние
+			docState:  []byte{},
 			broadcast: make(chan []byte),
 		}
 		roomsMap[roomID] = room
-		go broadcastUpdates(room) // Запуск обработчика рассылки
+		go broadcastUpdates(room)
 	}
 	return room
 }

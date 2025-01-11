@@ -18,7 +18,6 @@ func ExecuteCode(ctx context.Context, language, code string) (string, error) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	// Создаем временный файл для исходного кода
 	var fileName string
 	switch language {
 	case "javascript":
@@ -51,19 +50,16 @@ func ExecuteCode(ctx context.Context, language, code string) (string, error) {
 		return "", fmt.Errorf("unsupported language: %s", language)
 	}
 
-	// Создаем исходный файл
 	sourceFilePath := fmt.Sprintf("%s/%s", tempDir, fileName)
 	if err := os.WriteFile(sourceFilePath, []byte(code), 0644); err != nil {
 		return "", fmt.Errorf("failed to write source file: %w", err)
 	}
 
-	// Формируем команды для Docker
 	dockerRunBase := []string{"run", "--rm", "-v", fmt.Sprintf("%s:/code", tempDir), imageName}
 
 	var output bytes.Buffer
 	var stderr bytes.Buffer
 
-	// Выполняем компиляцию, если требуется
 	if len(compileCommand) > 0 {
 		cmd := exec.CommandContext(ctx, "docker", append(dockerRunBase, compileCommand...)...)
 		cmd.Stdout = &output
@@ -74,7 +70,6 @@ func ExecuteCode(ctx context.Context, language, code string) (string, error) {
 		}
 	}
 
-	// Выполняем запуск
 	cmd := exec.CommandContext(ctx, "docker", append(dockerRunBase, runCommand...)...)
 	cmd.Stdout = &output
 	cmd.Stderr = &stderr
