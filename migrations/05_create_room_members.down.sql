@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS room_members CASCADE;
+DROP TYPE IF EXISTS room_role;

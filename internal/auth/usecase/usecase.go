@@ -81,7 +81,7 @@ func (u *authUC) Login(ctx context.Context, user *models.User) (*models.UserWith
 
 	foundUser.SanitizePassword()
 
-	token, err := utils.GenerateJWTToken(user, u.cfg)
+	token, err := utils.GenerateJWTToken(foundUser, u.cfg)
 	if err != nil {
 		return nil, httpErrors.NewInternalServerError(errors.Wrap(err, "authUC.GetUsers.GenerateJWTToken"))
 	}
@@ -111,6 +111,23 @@ func (u *authUC) Update(ctx context.Context, user *models.User) (*models.User, e
 
 	updatedUser.SanitizePassword()
 
+	return updatedUser, nil
+}
+
+func (u *authUC) UpdateProfile(ctx context.Context, user *models.User) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authUC.UpdateProfile")
+	defer span.Finish()
+
+	updatedUser, err := u.authRepo.UpdateProfile(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = u.redisRepo.DeleteUserCtx(ctx, u.GenerateUserKey(user.UserID.String())); err != nil {
+		u.logger.Errorf("authUC.UpdateProfile.DeleteUserCtx: %s", err)
+	}
+
+	updatedUser.SanitizePassword()
 	return updatedUser, nil
 }
 

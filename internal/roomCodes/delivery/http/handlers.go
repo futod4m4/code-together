@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/futod4m4/m/config"
 	"github.com/futod4m4/m/internal/models"
 	"github.com/futod4m4/m/internal/roomCodes"
@@ -54,22 +53,18 @@ func (h *roomCodeHandlers) Update() echo.HandlerFunc {
 		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomCodeHandlers.Update")
 		defer span.Finish()
 
-		fmt.Println("0")
 		roomCodeUUID, err := uuid.Parse(c.Param("room_code_id"))
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 
-		fmt.Println("1")
 		r := &models.RoomCode{}
 		if err = c.Bind(r); err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
 		r.ID = roomCodeUUID
-
-		fmt.Println("2")
 
 		updatedRoomCode, err := h.roomCodeUC.UpdateRoomCode(ctx, r)
 		if err != nil {
@@ -128,6 +123,10 @@ func (h *roomCodeHandlers) GetRoomCodeByRoomID() echo.HandlerFunc {
 		defer span.Finish()
 
 		roomID, err := uuid.Parse(c.Param("room_id"))
+		if err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			return c.JSON(httpErrors.ErrorResponse(err))
+		}
 
 		roomCodeIDByRoomID, err := h.roomCodeUC.GetRoomCodeByRoomID(ctx, roomID)
 		if err != nil {
@@ -140,9 +139,17 @@ func (h *roomCodeHandlers) GetRoomCodeByRoomID() echo.HandlerFunc {
 }
 
 func (h *roomCodeHandlers) Compile() echo.HandlerFunc {
+	type ProjectFile struct {
+		Filename string `json:"filename"`
+		Content  string `json:"content"`
+	}
+
 	type CompileRequest struct {
-		Code     string `json:"code"`
-		Language string `json:"language"`
+		Code     string        `json:"code"`
+		Language string        `json:"language"`
+		Mode     string        `json:"mode"`
+		TestCode string        `json:"test_code"`
+		Files    []ProjectFile `json:"files"`
 	}
 
 	type CompileResponse struct {
@@ -159,11 +166,67 @@ func (h *roomCodeHandlers) Compile() echo.HandlerFunc {
 			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request payload"})
 		}
 
-		output, compileErr := utils.ExecuteCode(ctx, req.Language, req.Code)
+		// Convert files to map for the compiler
+		filesMap := make(map[string]string)
+		for _, f := range req.Files {
+			filesMap[f.Filename] = f.Content
+		}
+
+		var output string
+		var compileErr error
+
+		if req.Mode == "test" && req.TestCode != "" {
+			output, compileErr = utils.ExecuteCodeWithTests(ctx, req.Language, req.Code, req.TestCode)
+		} else {
+			output, compileErr = utils.ExecuteProject(ctx, req.Language, req.Code, filesMap)
+		}
+
 		if compileErr != nil {
-			return c.JSON(http.StatusOK, CompileResponse{Output: "", Error: compileErr.Error()})
+			return c.JSON(http.StatusOK, CompileResponse{Output: output, Error: compileErr.Error()})
 		}
 
 		return c.JSON(http.StatusOK, CompileResponse{Output: output})
+	}
+}
+
+func (h *roomCodeHandlers) DownloadCode() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomCodeHandlers.DownloadCode")
+		defer span.Finish()
+
+		roomCodeUUID, err := uuid.Parse(c.Param("room_code_id"))
+		if err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			return c.JSON(httpErrors.ErrorResponse(err))
+		}
+
+		roomCode, err := h.roomCodeUC.GetRoomCodeByID(ctx, roomCodeUUID)
+		if err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			return c.JSON(httpErrors.ErrorResponse(err))
+		}
+
+		// Determine file extension based on room language (query param)
+		lang := c.QueryParam("language")
+		ext := ".txt"
+		switch lang {
+		case "javascript":
+			ext = ".js"
+		case "python":
+			ext = ".py"
+		case "java":
+			ext = ".java"
+		case "go":
+			ext = ".go"
+		case "rust":
+			ext = ".rs"
+		case "php":
+			ext = ".php"
+		}
+
+		filename := "code" + ext
+		c.Response().Header().Set("Content-Disposition", "attachment; filename="+filename)
+		c.Response().Header().Set("Content-Type", "text/plain")
+		return c.String(http.StatusOK, roomCode.Code)
 	}
 }

@@ -13,6 +13,9 @@ type User struct {
 	Email     string    `json:"email,omitempty" db:"email" redis:"email" validate:"omitempty,required,lte=60,email"`
 	Password  string    `json:"password,omitempty" db:"password" redis:"password" validate:"omitempty,required,gte=6"`
 	Nickname  string    `json:"nickname" db:"nickname" redis:"nickname" validate:"omitempty,required,lte=30"`
+	AvatarURL string    `json:"avatar_url" db:"avatar_url" redis:"avatar_url" validate:"omitempty"`
+	GithubURL string    `json:"github_url" db:"github_url" redis:"github_url" validate:"omitempty"`
+	Bio       string    `json:"bio" db:"bio" redis:"bio" validate:"omitempty"`
 }
 
 func (u *User) HashPassword() error {

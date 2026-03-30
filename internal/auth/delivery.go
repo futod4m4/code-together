@@ -7,6 +7,7 @@ type Handlers interface {
 	Login() echo.HandlerFunc
 	Logout() echo.HandlerFunc
 	Update() echo.HandlerFunc
+	UpdateProfile() echo.HandlerFunc
 	Delete() echo.HandlerFunc
 	GetUserByID() echo.HandlerFunc
 	GetMe() echo.HandlerFunc

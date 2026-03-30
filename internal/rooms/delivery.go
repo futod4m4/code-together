@@ -8,6 +8,7 @@ type HttpHandlers interface {
 	Delete() echo.HandlerFunc
 	GetRoomByID() echo.HandlerFunc
 	GetRoomByJoinCode() echo.HandlerFunc
+	GetMyRooms() echo.HandlerFunc
 }
 
 type WSHandlers interface {

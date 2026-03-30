@@ -31,6 +31,8 @@ func (r *roomRepo) CreateRoom(ctx context.Context, room *models.Room) (*models.R
 		&room.JoinCode,
 		&room.Language,
 		&room.OwnerID,
+		&room.Description,
+		&room.IsPrivate,
 	).StructScan(&ro); err != nil {
 		return nil, errors.Wrap(err, "roomRepo.Create.QueryRowxContext")
 	}
@@ -49,6 +51,9 @@ func (r *roomRepo) UpdateRoom(ctx context.Context, room *models.Room) (*models.R
 		&room.Name,
 		&room.Language,
 		&room.OwnerID,
+		&room.ID,
+		&room.Description,
+		&room.IsPrivate,
 	).StructScan(&ro); err != nil {
 		return nil, errors.Wrap(err, "roomRepo.Update.QueryRowxContext")
 	}
@@ -98,4 +103,16 @@ func (r *roomRepo) GetRoomByJoinCode(ctx context.Context, joinCode string) (*mod
 	}
 
 	return ro, nil
+}
+
+func (r *roomRepo) GetRoomsByOwnerID(ctx context.Context, ownerID uuid.UUID) ([]*models.Room, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "roomRepo.GetRoomsByOwnerID")
+	defer span.Finish()
+
+	var rooms []*models.Room
+	if err := r.db.SelectContext(ctx, &rooms, getRoomsByOwnerID, ownerID); err != nil {
+		return nil, errors.Wrap(err, "roomRepo.GetRoomsByOwnerID.SelectContext")
+	}
+
+	return rooms, nil
 }

@@ -52,8 +52,13 @@ func (mw *MiddlewareManager) AuthSessionMiddleware(next echo.HandlerFunc) echo.H
 			return c.JSON(http.StatusUnauthorized, httpErrors.NewUnauthorizedError(httpErrors.Unauthorized))
 		}
 
+		// Refresh session TTL on each request (sliding expiration)
+		go func() {
+			_ = mw.sessUC.RefreshSession(c.Request().Context(), cookie.Value, mw.cfg.Session.Expire)
+		}()
+
 		c.Set("sid", sid)
-		c.Set("uid", sess.SessionID)
+		c.Set("uid", sess.UserID.String())
 		c.Set("user", user)
 
 		ctx := context.WithValue(c.Request().Context(), utils.UserCtxKey{}, user)

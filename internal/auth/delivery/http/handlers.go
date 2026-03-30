@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"fmt"
 	"github.com/futod4m4/m/config"
 	"github.com/futod4m4/m/internal/auth"
 	"github.com/futod4m4/m/internal/models"
@@ -49,7 +48,6 @@ func (h *authHandlers) Register() echo.HandlerFunc {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
-		fmt.Println(createdUser)
 
 		sess, err := h.sessUC.CreateSession(ctx, &models.Session{
 			UserID: createdUser.User.UserID,
@@ -58,9 +56,7 @@ func (h *authHandlers) Register() echo.HandlerFunc {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
 		}
-		fmt.Println(sess)
 		c.SetCookie(utils.CreateSessionCookie(h.cfg, sess))
-		fmt.Println("authHandler.Register доходит")
 		return c.JSON(http.StatusCreated, createdUser)
 	}
 }
@@ -149,6 +145,41 @@ func (h *authHandlers) Update() echo.HandlerFunc {
 		}
 
 		updatedUser, err := h.authUC.Update(ctx, user)
+		if err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			return c.JSON(httpErrors.ErrorResponse(err))
+		}
+
+		return c.JSON(http.StatusOK, updatedUser)
+	}
+}
+
+func (h *authHandlers) UpdateProfile() echo.HandlerFunc {
+	type ProfileUpdate struct {
+		AvatarURL string `json:"avatar_url"`
+		GithubURL string `json:"github_url"`
+		Bio       string `json:"bio"`
+	}
+	return func(c echo.Context) error {
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "auth.UpdateProfile")
+		defer span.Finish()
+
+		user, err := utils.GetUserFromCtx(ctx)
+		if err != nil {
+			return c.JSON(http.StatusUnauthorized, httpErrors.NewUnauthorizedError(err))
+		}
+
+		profile := &ProfileUpdate{}
+		if err := c.Bind(profile); err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			return c.JSON(httpErrors.ErrorResponse(err))
+		}
+
+		user.AvatarURL = profile.AvatarURL
+		user.GithubURL = profile.GithubURL
+		user.Bio = profile.Bio
+
+		updatedUser, err := h.authUC.UpdateProfile(ctx, user)
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))

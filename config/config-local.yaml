@@ -46,14 +46,14 @@ redis:
 
 cookie:
   Name: jwt-token
-  MaxAge: 86400
+  MaxAge: 604800
   Secure: false
   HttpOnly: true
 
 session:
   Name: session-id
   Prefix: api-session
-  Expire: 3600
+  Expire: 604800
 
 jaeger:
   Host: localhost:6831

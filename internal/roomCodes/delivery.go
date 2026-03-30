@@ -9,4 +9,5 @@ type HttpHandlers interface {
 	Compile() echo.HandlerFunc
 	GetRoomCodeByID() echo.HandlerFunc
 	GetRoomCodeByRoomID() echo.HandlerFunc
+	DownloadCode() echo.HandlerFunc
 }

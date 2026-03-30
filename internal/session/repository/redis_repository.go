@@ -77,6 +77,13 @@ func (s *sessionRepo) DeleteSessionByID(ctx context.Context, sessionID string) e
 	return nil
 }
 
+func (s *sessionRepo) RefreshSession(ctx context.Context, sessionID string, expire int) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "sessionRepo.RefreshSession")
+	defer span.Finish()
+
+	return s.redisClient.Expire(ctx, sessionID, time.Second*time.Duration(expire)).Err()
+}
+
 func (s *sessionRepo) createKey(sessionID string) string {
 	return fmt.Sprintf("%s: %s", s.basePrefix, sessionID)
 }

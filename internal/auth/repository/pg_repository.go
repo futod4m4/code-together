@@ -81,6 +81,20 @@ func (r *authRepo) GetByID(ctx context.Context, userID uuid.UUID) (*models.User,
 	return u, nil
 }
 
+func (r *authRepo) UpdateProfile(ctx context.Context, user *models.User) (*models.User, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.UpdateProfile")
+	defer span.Finish()
+
+	u := &models.User{}
+	if err := r.db.QueryRowxContext(ctx, updateProfileQuery,
+		&user.AvatarURL, &user.GithubURL, &user.Bio, &user.UserID,
+	).StructScan(u); err != nil {
+		return nil, errors.Wrap(err, "authRepo.UpdateProfile.StructScan")
+	}
+
+	return u, nil
+}
+
 func (r *authRepo) FindUserByEmail(ctx context.Context, user *models.User) (*models.User, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "authRepo.FindUserByEmail")
 	defer span.Finish()

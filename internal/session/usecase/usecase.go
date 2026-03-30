@@ -35,6 +35,10 @@ func (u *sessionUC) GetSessionByID(ctx context.Context, sessionID string) (*mode
 	return u.sessionRepo.GetSessionByID(ctx, sessionID)
 }
 
+func (u *sessionUC) RefreshSession(ctx context.Context, sessionID string, expire int) error {
+	return u.sessionRepo.RefreshSession(ctx, sessionID, expire)
+}
+
 func (u *sessionUC) DeleteSessionByID(ctx context.Context, sessionID string) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "sessionUC.DeleteSessionByID")
 	defer span.Finish()

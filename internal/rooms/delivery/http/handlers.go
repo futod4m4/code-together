@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/futod4m4/m/config"
+	"github.com/futod4m4/m/internal/members"
 	"github.com/futod4m4/m/internal/models"
 	"github.com/futod4m4/m/internal/rooms"
 	"github.com/futod4m4/m/pkg/httpErrors"
@@ -14,16 +15,18 @@ import (
 )
 
 type roomHandlers struct {
-	cfg    *config.Config
-	roomUC rooms.RoomUseCase
-	logger logger.Logger
+	cfg      *config.Config
+	roomUC   rooms.RoomUseCase
+	memberUC members.UseCase
+	logger   logger.Logger
 }
 
-func NewRoomHandlers(cfg *config.Config, roomUC rooms.RoomUseCase, logger logger.Logger) rooms.HttpHandlers {
+func NewRoomHandlers(cfg *config.Config, roomUC rooms.RoomUseCase, memberUC members.UseCase, logger logger.Logger) rooms.HttpHandlers {
 	return &roomHandlers{
-		cfg:    cfg,
-		roomUC: roomUC,
-		logger: logger,
+		cfg:      cfg,
+		roomUC:   roomUC,
+		memberUC: memberUC,
+		logger:   logger,
 	}
 }
 
@@ -42,6 +45,15 @@ func (h *roomHandlers) Create() echo.HandlerFunc {
 		if err != nil {
 			utils.LogResponseError(c, h.logger, err)
 			return c.JSON(httpErrors.ErrorResponse(err))
+		}
+
+		// Auto-add owner as member
+		if _, err := h.memberUC.AddMember(ctx, &models.RoomMember{
+			RoomID: createdRoom.ID,
+			UserID: createdRoom.OwnerID,
+			Role:   "owner",
+		}); err != nil {
+			h.logger.Errorf("roomHandlers.Create.AddOwnerMember: %v", err)
 		}
 
 		return c.JSON(http.StatusCreated, createdRoom)
@@ -131,5 +143,26 @@ func (h *roomHandlers) GetRoomByJoinCode() echo.HandlerFunc {
 		}
 
 		return c.JSON(http.StatusOK, roomByJoinCode)
+	}
+}
+
+func (h *roomHandlers) GetMyRooms() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		span, ctx := opentracing.StartSpanFromContext(utils.GetRequestCtx(c), "roomHandlers.GetMyRooms")
+		defer span.Finish()
+
+		user, err := utils.GetUserFromCtx(ctx)
+		if err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			return c.JSON(http.StatusUnauthorized, httpErrors.NewUnauthorizedError(err))
+		}
+
+		rooms, err := h.roomUC.GetRoomsByOwnerID(ctx, user.UserID)
+		if err != nil {
+			utils.LogResponseError(c, h.logger, err)
+			return c.JSON(httpErrors.ErrorResponse(err))
+		}
+
+		return c.JSON(http.StatusOK, rooms)
 	}
 }

@@ -1,0 +1,65 @@
+server:
+  AppVersion: 1.0.0
+  Port: :8080
+  Mode: Development
+  JwtSecretKey: futodamaforever
+  CookieName: jwt-token
+  ReadTimeout: 5
+  WriteTimeout: 5
+  SSL: false
+  CtxDefaultTimeout: 12
+  CSRF: false
+  Debug: false
+
+socket:
+  SocketPort: :8081
+  ReadBufferSize: 2048
+  WriteBufferSize: 2048
+  CheckOrigin: true
+
+logger:
+  Development: true
+  DisableCaller: false
+  DisableStacktrace: false
+  Encoding: json
+  Level: debug
+
+postgres:
+  PostgresqlHost: postgres
+  PostgresqlPort: 5432
+  PostgresqlUser: fedor
+  PostgresqlPassword: postgres
+  PostgresqlDbname: code_together
+  PostgresqlSslmode: false
+  PgDriver: pgx
+
+redis:
+  RedisAddr: redis:6379
+  RedisPassword: ""
+  RedisDb: 0
+  RedisDefaultdb: 0
+  MinIdleConns: 200
+  PoolSize: 12000
+  PoolTimeout: 240
+  Password: ""
+  DB: 0
+
+cookie:
+  Name: jwt-token
+  MaxAge: 604800
+  Secure: false
+  HttpOnly: true
+
+session:
+  Name: session-id
+  Prefix: api-session
+  Expire: 604800
+
+jaeger:
+  Host: jaeger:6831
+  ServiceName: CODE_TOGETHER
+  LogSpans: true
+
+metrics:
+  Url: 0.0.0.0:7070
+  ServiceName: api

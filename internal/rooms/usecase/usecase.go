@@ -153,6 +153,13 @@ func (u *roomUC) GetRoomByJoinCode(ctx context.Context, joinCode string) (*model
 	return r, nil
 }
 
+func (u *roomUC) GetRoomsByOwnerID(ctx context.Context, ownerID uuid.UUID) ([]*models.Room, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "roomUC.GetRoomsByOwnerID")
+	defer span.Finish()
+
+	return u.roomRepo.GetRoomsByOwnerID(ctx, ownerID)
+}
+
 func (u *roomUC) getKeyWithPrefix(roomID string) string {
 	return fmt.Sprintf("%s: %s", baseprefix, roomID)
 }

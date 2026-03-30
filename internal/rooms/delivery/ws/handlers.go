@@ -27,12 +27,17 @@ func (sw *SafeWebSocket) WriteMessage(messageType int, data []byte) error {
 
 type RoomConnections struct {
 	clients   map[*SafeWebSocket]bool
-	docState  []byte
-	broadcast chan []byte
+	broadcast chan broadcastMsg
 	mu        sync.RWMutex
 }
 
+type broadcastMsg struct {
+	data   []byte
+	sender *SafeWebSocket
+}
+
 var (
+	roomsMu  sync.Mutex
 	roomsMap = make(map[string]*RoomConnections)
 	upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -73,6 +78,10 @@ func (h *roomWSHandlers) Join() echo.HandlerFunc {
 		defer span.Finish()
 		joinCode := c.Param("join_code")
 		roomByJoinCode, err := h.roomUC.GetRoomByJoinCode(ctx, joinCode)
+		if err != nil {
+			log.Println("Failed to get room:", err)
+			return c.JSON(http.StatusBadRequest, "Invalid room")
+		}
 
 		roomID := roomByJoinCode.ID.String()
 		if _, err = uuid.Parse(roomID); err != nil {
@@ -91,8 +100,6 @@ func (h *roomWSHandlers) Join() echo.HandlerFunc {
 		addClientToRoom(safeConn, roomConn)
 		log.Printf("Client connected to room %s", roomID)
 
-		sendCurrentState(safeConn, roomConn)
-
 		go listenForUpdates(safeConn, roomConn)
 
 		return nil
@@ -100,22 +107,23 @@ func (h *roomWSHandlers) Join() echo.HandlerFunc {
 }
 
 func (h *roomWSHandlers) Leave() echo.HandlerFunc {
-	// TODO: implement me
 	return func(c echo.Context) error {
 		return nil
 	}
 }
 
 func getOrCreateRoom(roomID string) *RoomConnections {
+	roomsMu.Lock()
+	defer roomsMu.Unlock()
+
 	room, exists := roomsMap[roomID]
 	if !exists {
 		room = &RoomConnections{
 			clients:   make(map[*SafeWebSocket]bool),
-			docState:  []byte{},
-			broadcast: make(chan []byte),
+			broadcast: make(chan broadcastMsg, 256),
 		}
 		roomsMap[roomID] = room
-		go broadcastUpdates(room)
+		go broadcastUpdates(room, roomID)
 	}
 	return room
 }
@@ -132,6 +140,7 @@ func removeClientFromRoom(client *SafeWebSocket, room *RoomConnections) {
 	delete(room.clients, client)
 	if len(room.clients) == 0 {
 		close(room.broadcast)
+		roomsMu.Lock()
 		for id, r := range roomsMap {
 			if r == room {
 				delete(roomsMap, id)
@@ -139,19 +148,7 @@ func removeClientFromRoom(client *SafeWebSocket, room *RoomConnections) {
 				break
 			}
 		}
-	}
-}
-
-func sendCurrentState(client *SafeWebSocket, room *RoomConnections) {
-	room.mu.Lock()
-	defer room.mu.Unlock()
-	if len(room.docState) > 0 {
-		err := client.WriteMessage(websocket.BinaryMessage, room.docState)
-		if err != nil {
-			log.Printf("Error sending current state: %v", err)
-			client.conn.Close()
-			delete(room.clients, client)
-		}
+		roomsMu.Unlock()
 	}
 }
 
@@ -169,33 +166,26 @@ func listenForUpdates(client *SafeWebSocket, room *RoomConnections) {
 		}
 
 		if messageType != websocket.BinaryMessage {
-			log.Println("Ignoring non-binary message")
 			continue
 		}
 
-		room.mu.Lock()
-		room.docState = applyYUpdate(room.docState, message)
-		room.mu.Unlock()
-
-		room.broadcast <- message
+		room.broadcast <- broadcastMsg{data: message, sender: client}
 	}
 }
 
-func applyYUpdate(currentState, update []byte) []byte {
-	return update
-}
-
-func broadcastUpdates(room *RoomConnections) {
-	for update := range room.broadcast {
-		room.mu.Lock()
+func broadcastUpdates(room *RoomConnections, roomID string) {
+	for msg := range room.broadcast {
+		room.mu.RLock()
 		for client := range room.clients {
-			err := client.WriteMessage(websocket.BinaryMessage, update)
+			if client == msg.sender {
+				continue
+			}
+			err := client.WriteMessage(websocket.BinaryMessage, msg.data)
 			if err != nil {
 				log.Printf("Error broadcasting to client: %v", err)
 				client.conn.Close()
-				delete(room.clients, client)
 			}
 		}
-		room.mu.Unlock()
+		room.mu.RUnlock()
 	}
 }
